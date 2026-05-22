@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>6/45 로또 구매 및 결과 확인</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 30px; background-color: #f9f9f9; }
+        .container { width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background-color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .btn { padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 5px; }
+        .input-box { margin: 15px 0; }
+        input[type="text"] { width: 80%; padding: 8px; font-size: 16px; text-align: center; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: center; }
+        th { background-color: #f2f2f2; }
+        .rank-1 { color: red; font-weight: bold; }
+        .rank-fail { color: #888; }
+        .rank-ready { color: #2196F3; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if round %}
+            <h2>🎰 {{ round.round_number }}회차 로또 구매</h2>
+            <p>추첨일: {{ round.draw_date }}</p>
+            <hr>
+            <form method="POST" action="{% url 'buy_auto' round.id %}">
+                {% csrf_token %}
+                <div class="input-box">
+                    <button type="submit" class="btn" style="background-color: #2196F3;">⚡ 자동 번호 구매</button>
+                </div>
+            </form>
+            <hr>
+            <form method="POST" action="{% url 'buy_manual' round.id %}">
+                {% csrf_token %}
+                <div class="input-box">
+                    <p>1~45 사이의 숫자 6개를 콤마(,)로 구분해서 입력하세요.</p>
+                    <input type="text" name="manual_numbers" placeholder="예: 3, 11, 15, 20, 35, 42" required>
+                </div>
+                <button type="submit" class="btn">✍️ 수동 번호 구매</button>
+            </form>
+        {% else %}
+            <h2>🎰 현재 개설된 로또 회차가 없습니다.</h2>
+            <p>관리자 페이지에서 새 회차를 개설해 주세요.</p>
+        {% endif %}
+
+        <hr style="margin-top: 30px;">
+        
+        <h3>📜 나의 로또 구매 내역 & 당첨 결과</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>회차</th>
+                    <th>구매 번호</th>
+                    <th>구분</th>
+                    <th>당첨 결과</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td>{{ ticket.round.round_number }}회</td>
+                    <td><strong>{{ ticket.numbers }}</strong></td>
+                    <td>{{ ticket.get_is_auto_display }}</td>
+                    <td>
+                        {% if ticket.rank == 0 %}
+                            <span class="rank-ready">⏳ 추첨 전</span>
+                        {% elif ticket.rank == -1 %}
+                            <span class="rank-fail">낙첨</span>
+                        {% else %}
+                            <span class="rank-1">🎉 {{ ticket.rank }}등!</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">아직 구매한 티켓이 없습니다.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
